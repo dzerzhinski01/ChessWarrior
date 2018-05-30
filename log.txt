@@ -1,0 +1,12 @@
+2018-05-30 16:06:41,807 - root - INFO - GPU is running
+2018-05-30 16:06:41,807 - root - INFO - Initializing Player
+2018-05-30 16:06:41,807 - chesswarrior.play - CRITICAL - Model cannot find!
+2018-05-30 16:06:56,696 - root - INFO - GPU is running
+2018-05-30 16:06:56,696 - root - INFO - Initializing Player
+2018-05-30 16:06:56,696 - chesswarrior.play - CRITICAL - Model cannot find!
+2018-05-30 18:17:36,469 - root - INFO - GPU is running
+2018-05-30 18:17:36,469 - root - INFO - Initializing Player
+2018-05-30 18:17:36,469 - chesswarrior.play - CRITICAL - Model cannot find!
+2018-05-30 18:17:44,908 - root - INFO - GPU is running
+2018-05-30 18:17:44,908 - root - INFO - Initializing Player
+2018-05-30 18:18:01,024 - chesswarrior.play - CRITICAL - Model cannot find!

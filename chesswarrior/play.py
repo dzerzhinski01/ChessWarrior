@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import time
 import multiprocessing
-
+import threading
 import numpy as np
 import keras
 from keras.models import load_model
@@ -18,6 +18,24 @@ from .utils import convert_board_to_plane, get_all_possible_moves, first_person_
 
 
 logger = logging.getLogger(__name__)
+
+class MyThread(threading.Thread):
+    def __init__(self, func, args=()):
+        threading.Thread.__init__(self)
+        self.func = func
+        self.args = args
+
+    def run(self):
+        self.result = self.func(*self.args)
+
+    def get_result(self):
+        try:
+            return self.result
+        except Exception:
+            return None
+
+
+
 
 class Player(object):
     """Using the best model to play"""
@@ -176,27 +194,51 @@ class Player(object):
         #搜索前4个
         threshold = min(0.01, max([policy_v[1] for policy_v in policy_list]))
         lim = 5 if self.search_depth == depth else 10
+        if self.search_depth == depth:
+            threads = []
+            for move, policy_value in (policy_list[:lim] if color == 1 else policy_list):
+                if policy_value < threshold:
+                    continue
+                moves.append(move)
+                board.push(move)
+                tboard = chess.Board()
+                tboard.set_fen(board.fen())
+                tthread = MyThread(alpha_beta_search,(self, tboard, depth - 1, alpha, beta, -color))
+                threads.append([tthread, tboard, move])
+                board.pop()
+            for t in threads:
+                t[0].start()
+            for t in threads:
+                t[0].join()
+            for tthread,tboard,move in threads:
+                self.move_value[move] = tthread.get_result()
+                if color == 1:
+                    alpha = max(alpha, value)
+                else:
+                    beta = min(beta, value)
+                if beta <= alpha:
+                    break
+        else:
+            for move, policy_value in (policy_list[:lim] if color == 1 else policy_list):
+                if policy_value < threshold:
+                    continue
 
-        for move, policy_value in (policy_list[:lim] if color == 1 else policy_list):
-            if policy_value < threshold:
-                continue
+                board.push(move)
 
-            board.push(move)
+                value = self.alpha_beta_search(board, depth - 1, alpha, beta, -color)
 
-            value = self.alpha_beta_search(board, depth - 1, alpha, beta, -color)
-
-            board.pop()
-            if self.search_depth == depth:
-                self.move_value[move] = value
-                #print(move.uci())
-            '''if depth == 1:
-                print(move.uci(), is_black_turn(board.fen()), ' ', board.fen(), 'policy=', _)'''
-            if color == 1:
-                alpha = max(alpha, value)
-            else:
-                beta = min(beta, value)
-            if beta <= alpha:
-                break
+                board.pop()
+                if self.search_depth == depth:
+                    self.move_value[move] = value
+                    #print(move.uci())
+                '''if depth == 1:
+                    print(move.uci(), is_black_turn(board.fen()), ' ', board.fen(), 'policy=', _)'''
+                if color == 1:
+                    alpha = max(alpha, value)
+                else:
+                    beta = min(beta, value)
+                if beta <= alpha:
+                    break
         return alpha if color == 1 else beta
     
     def valuation(self, board):
